@@ -4,8 +4,9 @@
 }(function () { 'use strict';
 
   const cost = (pnts, clstr) => {
-    return sum(
-      clstr.map((c, i) => sum(pnts.filter((pnt) => pnt[2] == i).map((pnt) => dist(pnt, c))))
+    return (
+      (1 / pnts.length) *
+      sum(clstr.map((c, i) => sum(pnts.filter((pnt) => pnt[2] == i).map((pnt) => dist(pnt, c)))))
     );
   };
 
@@ -37,7 +38,7 @@
   };
 
   const dist = (a, b) => {
-    return (Math.pow(b[0] - a[0], 2) + Math.pow(b[1] - a[1], 2)) / 1000;
+    return Math.pow(b[0] - a[0], 2) + Math.pow(b[1] - a[1], 2);
   };
 
   const run_kmean = (pnts, k, runs) => {
@@ -995,37 +996,45 @@
     return palettes.find(pal => pal.name == name);
   }
 
-  const palette = get('empusa');
-  const cols = palette.colors;
+  const palette = get('harvest');
+  const cols = [].concat(palette.colors, palette.colors);
 
   let sketch = function (p) {
-    let THE_SEED;
-
     const w = 800;
     const h = 800;
     const pad = 40;
 
-    const n = 50;
+    const n = 500;
 
     let k;
     let pnts;
 
     p.setup = function () {
       p.createCanvas(w + 300, h);
-      THE_SEED = p.floor(p.random(9999999));
-      p.randomSeed(THE_SEED);
       p.strokeWeight(3);
-      //p.frameRate(0.5);
       p.noLoop();
 
       reset();
-      //p.draw();
     };
 
     p.draw = function () {
       if (k > cols.length) {
         reset();
       }
+      run(k);
+      k++;
+    };
+
+    p.keyPressed = function () {
+      if (p.keyCode === 80) p.saveCanvas('sketch_' + THE_SEED, 'jpeg');
+      if (p.keyCode === 38) p.draw();
+      if (p.keyCode === 39) {
+        reset();
+        p.draw();
+      }
+    };
+
+    function run(k) {
       p.noStroke();
       p.fill(palette.background);
       p.rect(0, 0, w, h);
@@ -1036,31 +1045,23 @@
       display_points(p, res_clstr, false);
       display_bar(p, k, cost, pad);
 
-      console.log('cost at K=', k, ': ', cost);
-      k++;
-    };
-
-    p.keyPressed = function () {
-      if (p.keyCode === 80) p.saveCanvas('sketch_' + THE_SEED, 'jpeg');
-    };
-
-    p.mousePressed = function () {
-      p.draw();
-    };
+      console.log('cost at K=', k, ': ', Math.round(cost));
+    }
 
     function reset() {
       p.background(palette.background);
-      pnts = random_points(n, w, h, pad);
+      pnts = random_points(p, n, w, h, pad);
       k = 1;
     }
   };
   new p5(sketch);
 
-  const random_points = (n, w, h, pad) => {
+  const random_points = (p, n, w, h, pad) => {
+    p.noiseSeed(p.random(2000));
     return Array.from([...Array(n)], () => [
       pad + Math.random() * (w - pad * 2),
       pad + Math.random() * (h - pad * 2),
-    ]);
+    ]).filter((pos) => p.noise(pos[0] / 50, pos[1] / 50) > 0.62);
   };
 
   const display_points = (p, pnts, fill) => {
@@ -1080,7 +1081,7 @@
 
   const display_bar = (p, y, cost, pad) => {
     const y1 = pad + 12 * (y - 1);
-    const width = cost / 20;
+    const width = cost / 400;
     p.fill(cols[y - 1]);
     p.noStroke();
     p.rect(800, y1, width, 8);

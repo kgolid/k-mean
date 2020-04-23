@@ -1,6 +1,7 @@
 export const cost = (pnts, clstr) => {
-  return sum(
-    clstr.map((c, i) => sum(pnts.filter((pnt) => pnt[2] == i).map((pnt) => dist(pnt, c))))
+  return (
+    (1 / pnts.length) *
+    sum(clstr.map((c, i) => sum(pnts.filter((pnt) => pnt[2] == i).map((pnt) => dist(pnt, c)))))
   );
 };
 
@@ -32,5 +33,5 @@ export const min = (arr) => {
 };
 
 const dist = (a, b) => {
-  return (Math.pow(b[0] - a[0], 2) + Math.pow(b[1] - a[1], 2)) / 1000;
+  return Math.pow(b[0] - a[0], 2) + Math.pow(b[1] - a[1], 2);
 };
