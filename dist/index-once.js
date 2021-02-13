@@ -3,13 +3,6 @@
   factory();
 }(function () { 'use strict';
 
-  const cost = (pnts, clstr) => {
-    return (
-      (1 / pnts.length) *
-      sum(clstr.map((c, i) => sum(pnts.filter((pnt) => pnt[2] == i).map((pnt) => dist(pnt, c)))))
-    );
-  };
-
   const closest = (a, pnts) => {
     const dists = pnts.map((pnt) => dist(a, pnt));
     return min(dists);
@@ -39,35 +32,6 @@
 
   const dist = (a, b) => {
     return Math.pow(b[0] - a[0], 2) + Math.pow(b[1] - a[1], 2);
-  };
-
-  const run_kmean = (pnts, k, runs) => {
-    const results = [];
-    for (let i = 0; i < runs; i++) {
-      const clstr = initialize_cluster(pnts, k);
-      results.push(get_cluster(pnts, clstr));
-    }
-    const [_, minindex] = min(results.map((r) => r[2]));
-    return results[minindex];
-  };
-
-  const get_cluster = (pnts, clstr) => {
-    let old_cost = 99999999;
-    let new_cost = old_cost - 1;
-
-    while (old_cost - new_cost != 0) {
-      old_cost = new_cost;
-      [pnts, clstr, new_cost] = run_iteration(pnts, clstr);
-    }
-
-    return [clstr, pnts, new_cost];
-  };
-
-  const run_iteration = (pnts, clstr) => {
-    const new_pnts = assign_points(pnts, clstr);
-    const new_clstr = update_cluster(new_pnts, clstr);
-
-    return [new_pnts, new_clstr, cost(new_pnts, new_clstr)];
   };
 
   const assign_points = (pnts, clstr) => {
@@ -1007,12 +971,15 @@
     const pad = 40;
 
     const n = 500;
+    const k = 4;
 
-    let k;
+    let tick;
+
     let pnts;
+    let clstr;
 
     p.setup = function () {
-      p.createCanvas(w + 300, h);
+      p.createCanvas(w, h);
       p.strokeWeight(3);
       p.noLoop();
 
@@ -1020,11 +987,11 @@
     };
 
     p.draw = function () {
-      if (k > cols.length) {
+      if (tick > 20) {
         reset();
       }
-      run(k);
-      k++;
+      run(tick);
+      tick++;
     };
 
     p.keyPressed = function () {
@@ -1036,24 +1003,26 @@
       }
     };
 
-    function run(k) {
+    function run(tick) {
       p.noStroke();
       p.fill(palette.background);
       p.rect(0, 0, w, h);
 
-      const [res_clstr, res_pnts, cost] = run_kmean(pnts, k, 50);
+      if (tick % 2 === 0) {
+        pnts = assign_points(pnts, clstr);
+      } else {
+        clstr = update_cluster(pnts, clstr);
+      }
 
-      display_points(p, res_pnts, false);
-      display_points(p, res_clstr, true);
-      display_bar(p, k, cost, pad);
-
-      console.log('cost at K=', k, ': ', Math.round(cost));
+      display_points(p, clstr, true);
+      display_points(p, pnts, false);
     }
 
     function reset() {
       p.background(palette.background);
+      tick = 0;
       pnts = random_points(p, n, w, h, pad);
-      k = 1;
+      clstr = initialize_cluster(pnts, k);
     }
   };
   new p5(sketch);
@@ -1063,7 +1032,7 @@
     return Array.from([...Array(n)], () => [
       pad + Math.random() * (w - pad * 2),
       pad + Math.random() * (h - pad * 2),
-    ]).filter((pos) => p.noise(pos[0] / 50, pos[1] / 50) > 0.62);
+    ]).filter((pos) => p.noise(pos[0] / 50, pos[1] / 50) > 0.6);
   };
 
   const display_points = (p, pnts, fill) => {
@@ -1079,14 +1048,6 @@
     else p.noFill();
     p.stroke(col);
     p.ellipse(pnt[0], pnt[1], size, size);
-  };
-
-  const display_bar = (p, y, cost, pad) => {
-    const y1 = pad + 12 * (y - 1);
-    const width = cost / 400;
-    p.fill(cols[y - 1]);
-    p.noStroke();
-    p.rect(800, y1, width, 8);
   };
 
 }));

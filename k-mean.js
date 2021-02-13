@@ -29,14 +29,17 @@ const run_iteration = (pnts, clstr) => {
   return [new_pnts, new_clstr, util.cost(new_pnts, new_clstr)];
 };
 
-const assign_points = (pnts, clstr) => {
+export const assign_points = (pnts, clstr) => {
   return pnts.map((pnt) => [pnt[0], pnt[1], util.closest(pnt, clstr)[1]]);
 };
 
-const update_cluster = (pnts, clstr) => {
+export const update_cluster = (pnts, clstr) => {
   return clstr.map((_, i) => [...util.mean(pnts.filter((p) => p[2] === i)), i]);
 };
 
-const initialize_cluster = (pnts, k) => {
-  return util.shuffle(pnts).slice(0, k);
+export const initialize_cluster = (pnts, k) => {
+  return util
+    .shuffle(pnts)
+    .slice(0, k)
+    .map((c, i) => [...c, i]);
 };

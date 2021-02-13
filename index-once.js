@@ -10,12 +10,15 @@ let sketch = function (p) {
   const pad = 40;
 
   const n = 500;
+  const k = 4;
 
-  let k;
+  let tick;
+
   let pnts;
+  let clstr;
 
   p.setup = function () {
-    p.createCanvas(w + 300, h);
+    p.createCanvas(w, h);
     p.strokeWeight(3);
     p.noLoop();
 
@@ -23,11 +26,11 @@ let sketch = function (p) {
   };
 
   p.draw = function () {
-    if (k > cols.length) {
+    if (tick > 20) {
       reset();
     }
-    run(k);
-    k++;
+    run(tick);
+    tick++;
   };
 
   p.keyPressed = function () {
@@ -39,24 +42,26 @@ let sketch = function (p) {
     }
   };
 
-  function run(k) {
+  function run(tick) {
     p.noStroke();
     p.fill(palette.background);
     p.rect(0, 0, w, h);
 
-    const [res_clstr, res_pnts, cost] = kmean.run_kmean(pnts, k, 50);
+    if (tick % 2 === 0) {
+      pnts = kmean.assign_points(pnts, clstr);
+    } else {
+      clstr = kmean.update_cluster(pnts, clstr);
+    }
 
-    display_points(p, res_pnts, false);
-    display_points(p, res_clstr, true);
-    display_bar(p, k, cost, pad);
-
-    console.log('cost at K=', k, ': ', Math.round(cost));
+    display_points(p, clstr, true);
+    display_points(p, pnts, false);
   }
 
   function reset() {
     p.background(palette.background);
+    tick = 0;
     pnts = random_points(p, n, w, h, pad);
-    k = 1;
+    clstr = kmean.initialize_cluster(pnts, k);
   }
 };
 new p5(sketch);
@@ -66,7 +71,7 @@ const random_points = (p, n, w, h, pad) => {
   return Array.from([...Array(n)], () => [
     pad + Math.random() * (w - pad * 2),
     pad + Math.random() * (h - pad * 2),
-  ]).filter((pos) => p.noise(pos[0] / 50, pos[1] / 50) > 0.62);
+  ]).filter((pos) => p.noise(pos[0] / 50, pos[1] / 50) > 0.6);
 };
 
 const display_points = (p, pnts, fill) => {

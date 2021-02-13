@@ -7,8 +7,16 @@ export default [
     input: 'index.js',
     output: {
       file: pkg.browser,
-      format: 'umd'
+      format: 'umd',
     },
-    plugins: [resolve(), commonjs()]
-  }
+    plugins: [resolve(), commonjs()],
+  },
+  {
+    input: 'index-once.js',
+    output: {
+      file: pkg.browser_once,
+      format: 'umd',
+    },
+    plugins: [resolve(), commonjs()],
+  },
 ];

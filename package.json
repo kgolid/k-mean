@@ -9,9 +9,10 @@
     "watch": "rollup -c -w"
   },
   "keywords": [],
-  "author": "",
+  "author": "Kjetil Golid",
   "license": "ISC",
   "browser": "dist/index.js",
+  "browser_once": "dist/index-once.js",
   "dependencies": {
     "chromotome": "^1.2.0"
   },
